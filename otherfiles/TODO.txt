@@ -1,0 +1,17 @@
+TODO
+====
+
+- Rename Hive.poc2cell
+
+- Keep track of the pieces available to each player
+
+- Testes for check_victory()
+
+- Tests for Queen in the first 4 moves rule
+
+- Tests No Queen in the first move rule
+
+- change the logic for player numbering in main.py to match that of hive.py
+  e.g. white is 0 and black is 1
+
+- Create a plugin system to support new pieces and rules
