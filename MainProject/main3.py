@@ -54,12 +54,12 @@ class HexaCanvas(Canvas):
         point4 = (x - Δx, y - size / 2)
         point5 = (x - Δx, y + size / 2)
         point6 = (x, y + size)
-        print(point1)
-        print(point2)
-        print(point3)
-        print(point4)
-        print(point5)
-        print(point6[0])
+        # print(point1)
+        # print(point2)
+        # print(point3)
+        # print(point4)
+        # print(point5)
+        # print(point6)
 
         # this setting allow to specify a different color for each side.
         if color1 == None:
@@ -117,29 +117,30 @@ class HexagonalGrid(HexaCanvas):
 #
 
 
-if __name__ == "__main__":
-    tk = Tk()
-
-    grid = HexagonalGrid(tk, scale=50, grid_width=4, grid_height=4)
-    grid.grid(row=0, column=0, padx=5, pady=5)
-
-    # quit = Button(tk, text="Quit", command=lambda: correct_quit(tk))
-    xAxisInput = Text(tk, height=2, width=2, bg="light yellow")
-    yAxisInput = Text(tk, height=2, width=2, bg="light yellow")
-    beeSelectBtn = Text(tk, height=2, width=2, bg="light yellow")
-    # btn = Button(tk, height=2, text='submit move', bg = '#66ff66', command = onSubmitMove)
-    # xAxisInput.grid(row=10, column=10)
-    # yAxisInput.grid(row=10, column=9)
-    # beeSelectBtn.grid(row = 10, column = 8)
-    # btn.grid(row=10, column=7)
-
-
-    # grid.setCell(0, 1, fill='green', txt="S")
-    # grid.setCell(1, 1, fill='yellow')
-    # grid.setCell(2, 0, fill='cyan')
-    # grid.setCell(0, 2, fill='teal')
-    # grid.setCell(2, 1, fill='silver')
-    # grid.setCell(1, 2, fill='white')
-    # grid.setCell(2, 2, fill='gray')
-
-    tk.mainloop()
+#
+# # if __name__ == "__main__":
+# #     tk = Tk()
+#
+#     # grid = HexagonalGrid(tk, scale=50, grid_width=4, grid_height=4)
+#     grid.grid(row=0, column=0, padx=5, pady=5)
+#
+#     # quit = Button(tk, text="Quit", command=lambda: correct_quit(tk))
+#     xAxisInput = Text(tk, height=2, width=2, bg="light yellow")
+#     yAxisInput = Text(tk, height=2, width=2, bg="light yellow")
+#     beeSelectBtn = Text(tk, height=2, width=2, bg="light yellow")
+#     # btn = Button(tk, height=2, text='submit move', bg = '#66ff66', command = onSubmitMove)
+#     # xAxisInput.grid(row=10, column=10)
+#     # yAxisInput.grid(row=10, column=9)
+#     # beeSelectBtn.grid(row = 10, column = 8)
+#     # btn.grid(row=10, column=7)
+#
+#
+#     # grid.setCell(0, 1, fill='green', txt="S")
+#     # grid.setCell(1, 1, fill='yellow')
+#     # grid.setCell(2, 0, fill='cyan')
+#     # grid.setCell(0, 2, fill='teal')
+#     # grid.setCell(2, 1, fill='silver')
+#     # grid.setCell(1, 2, fill='white')
+#     # grid.setCell(2, 2, fill='gray')
+#
+#     tk.mainloop()
