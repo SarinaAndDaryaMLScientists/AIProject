@@ -1,5 +1,5 @@
 import networkx as nx
-
+"this file is written by me"
 mydict = {
 
 }
@@ -10,7 +10,7 @@ for i in range(0, n):
         mydict[cnt] = (i, j)
         cnt = cnt + 1
 inv_map = dict(zip(mydict.values(), mydict.keys()))
-print(inv_map[2, 3])
+# print(inv_map[2, 3])
 # mydict.update({-2: (-1, -2)})
 # print(mydict)
 # mydict.pop(-2)  # key pop mishe na value.

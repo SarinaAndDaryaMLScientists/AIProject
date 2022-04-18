@@ -2,7 +2,8 @@ from tkinter import *
 
 "this is the main library i'm using for this project."
 "this is found from GITHUB"
-
+"i used it just to draw hexCanvas and Hexagonal page"
+"this page has just helped with cleaner UI and nothing else, it's just like a basic UI library"
 
 class HexaCanvas(Canvas):
     """ A canvas that provides a create-hexagone method """

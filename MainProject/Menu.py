@@ -5,9 +5,10 @@ import enum
 import numpy as np
 import matplotlib.pyplot as plt
 import anothertest.graphHashmap as ghashdict
-
 from MainProject.logic.BeeModel import *
 from MainProject.logic.Bee import *
+
+"this file is the main part of project"
 
 
 def get_num(x, y):
@@ -19,6 +20,10 @@ col = 8
 yellowQueenPlaced = False
 blueQueenPlaced = False
 counter = 1
+beeKindArray = []
+for i in range(0, 8):
+    for j in range(0, 8):
+        beeKindArray.append('N')
 arr = np.zeros((row, col), dtype=int)
 takenHomes = {}
 colors_arr = {}
@@ -43,7 +48,7 @@ bluebees = {
     BeeKind.QueenBee: 1, BeeKind.Spider: 2, BeeKind.Ant: 3, BeeKind.Grasshopper: 3,
     BeeKind.Beetle: 2
 }
-moves = []
+moves = []#x, y move [x,y]
 # print(arr)
 
 tk = Tk()
@@ -236,7 +241,25 @@ def noSameClrNeighbor(x, y):
     return True
 
 
-def onSubmitMove():
+def setXY(x, y, beeKindStr):
+    global clr
+    global mv_cnt
+    grid.setCell(x, y, txt=beeKindStr, fill=clr)
+    for q in neighbor_points(x, y):
+        if not takenHomes[get_num(x, y)]:
+            moves.append([q[0], q[1]])
+    if [x, y] in moves:
+        moves.remove([x, y])
+    mv_cnt = mv_cnt + 1
+    takenHomes[get_num(x, y)] = True
+    print("success")
+    if clr == 'yellow':
+        clr = 'blue'
+    else:
+        clr = 'yellow'
+
+
+def on_create():
     global clr
     beeKindStr = beeSelectBtn.get("1.0", "end-1c")
     beeKind = 'N'
@@ -254,7 +277,7 @@ def onSubmitMove():
 
     x = xAxisInput.get("1.0", "end-1c")
     y = yAxisInput.get("1.0", "end-1c")
-    print(x, y)
+    # print(x, y)
     try:
         x = int(x)
         if x > 7 or x < 0:
@@ -281,6 +304,7 @@ def onSubmitMove():
                 else:
                     blueQueenPlaced = True
             print("first move place it wherever you want")
+            beeKindArray[get_num(x, y)] = beeKind
             grid.setCell(x, y, txt=beeKindStr, fill=clr)
             mv_cnt = mv_cnt + 1
             for q in neighbor_points(x, y):
@@ -310,56 +334,65 @@ def onSubmitMove():
                     print("you should place your queen at this move!")
                     return
         if mv_cnt == 1:
-            print(moves) #todo delete
+            print(moves)  # todo delete
             if validate(beeKind, clr, x, y):
                 if not takenHomes[get_num(x, y)] and [x, y] in moves:
-                    grid.setCell(x, y, txt=beeKindStr, fill=clr)
-                    for q in neighbor_points(x, y):
-                        if not takenHomes[get_num(x, y)]:
-                            moves.append([q[0], q[1]])
-                    if [x, y] in moves:
-                        moves.remove([x, y])
-                    mv_cnt = mv_cnt + 1
-                    takenHomes[get_num(x, y)] = True
-                    print("success")
-                    colors_arr[get_num(x, y)] = clr
-                    if clr == 'yellow':
-                        clr = 'blue'
-                    else:
-                        clr = 'yellow'
-                    return
+                    setXY(x, y, beeKindStr)
         else:
             print(noSameClrNeighbor(x, y))
             if validate(beeKind, clr, x, y) and noSameClrNeighbor(x, y):
                 if not takenHomes[get_num(x, y)] and [x, y] in moves:
-                    grid.setCell(x, y, txt=beeKindStr, fill=clr)
-                    for q in neighbor_points(x, y):
-                        if not takenHomes[get_num(x, y)]:
-                            moves.append([q[0], q[1]])
-                    if [x, y] in moves:
-                        moves.remove([x, y])
-                    mv_cnt = mv_cnt + 1
-                    takenHomes[get_num(x, y)] = True
-                    print("success")
-                    if clr == 'yellow':
-                        clr = 'blue'
-                    else:
-                        clr = 'yellow'
+                    setXY(x, y, beeKindStr)
                     return
 
-        print("failed! line 271")
+        print("failed! line 348")
 
-    # Here the turns change
+
+def is_valid_move_for_bee(currBeeKind, x1, y1, x2, y2):
+    # todo todo todo todo this methode gets to validate wethere the Nove that current bee has made is valid or not.
+    return True
 
 
 def onMove(args):
-    pass
+    global clr
+    x1 = xmvfirst.get("1.0", "end-1c")
+    y1 = ymvfirst.get("1.0", "end-1c")
+    x2 = xmvsecond.get("1.0", "end-1c")
+    y2 = ymvsecond.get("1.0", "end-1c")
+
+    if not takenHomes[get_num(x1, y1)]:
+        print("the first house isn't taken yet to start moving")
+        return
+    if takenHomes[get_num(x2, y2)]:
+        print("dest is already taken")
+        return
+    global g
+    global mv_cnt
+    global blueQueenPlaced
+    global yellowQueenPlaced
+    if mv_cnt % 2 == 0:
+        if not yellowQueenPlaced:
+            print("place your queen before move!")
+            return
+    else:
+        if not blueQueenPlaced:
+            print("place your queen before move!")
+            return
+    currBeeKind = beeKindArray[get_num(x1, y1)]
+    # todo check if the player is using it's bee in the right order! eg: queen can't jump and ...
+    gcpy = g.copy()
+    gcpy.remove_node(get_num(x1, y1))
+    if nx.is_connected(gcpy):  # checks if Graph is connected.
+        if [x2, y2] in moves:
+            if validate(currBeeKind, colors_arr[get_num(x2, y2)], x2, y2):
+                if (is_valid_move_for_bee(currBeeKind, x1, y1, x2, y2)):
+                    setXY(x2, y2, clr)
 
 
 if __name__ == '__main__':
     initfirst();
     grid.grid(row=0, column=0, padx=0, pady=0)
-    btn = Button(tk, height=2, text='Create new bee', bg='#66ff66', command=onSubmitMove)
+    btn = Button(tk, height=2, text='Create new bee', bg='#66ff66', command=on_create)
     btn2 = Button(tk, height=2, text="edit bee place", bg='#66ff66', command=onMove)
     xAxisInput.grid(row=10, column=10)
     yAxisInput.grid(row=10, column=9)
