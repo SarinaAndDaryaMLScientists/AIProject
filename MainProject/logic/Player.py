@@ -19,7 +19,7 @@ class Player():
         }
 
     def get_player_pieces(self):
-        return self.pieces;
+        return self.pieces
 
     def use_one_piece(self, str_inp):
         if str_inp == 'Q':
