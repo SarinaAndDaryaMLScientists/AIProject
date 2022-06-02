@@ -11,7 +11,7 @@ import sets
 p1 = Player("yellow")
 p2 = Player("blue")
 move_count = 1
-arr_move_cnt = []
+# arr_move_cnt
 movecount_map = {}
 # UI ELEMENTS
 
@@ -26,23 +26,13 @@ ymvsecond = Text(tk, height=2, width=2, bg="light blue")
 typeTxt = Text(tk, height=2, width=2, bg="light yellow")
 
 #
-turn = True
+turn = False
 mv_cnt = 0
 
 game_graph = nx.Graph()
 valid_moves = set()
 is_taken = []
 game_page = []
-
-
-def init_game_logic():
-    global game_page
-    global is_taken
-    game_page = [[[] for j in range(8)] for i in range(8)]
-    is_taken = [[False for j in range(8)] for i in range(8)]
-
-    # print("is taken")
-    # print(is_taken)
 
 
 def _is_valid_x_and_y(x, y):
@@ -152,56 +142,28 @@ def getRightIndex(x, y):
 
 
 def getLeftUpIndex(x, y):
-    if x % 2 == 1:
-        if y % 2 == 0:
-            return [x - 1, y - 1]
-        else:
-            return [x, y - 1]
+    if y % 2 == 0:
+        return [x - 1, y - 1]
     else:
-        if y % 2 == 1:
-            return [x, y - 1]
-        else:
-            return [x - 1, y - 1]
-
+        return [x, y - 1]
 
 def getRightUpIndex(x, y):
-    if x % 2 == 1:
-        if y % 2 == 0:
-            return [x, y - 1]
-        else:
-            return [x + 1, y - 1]
+    if y % 2 == 0:
+        return [x, y - 1]
     else:
-        if y % 2 == 1:
-            return [x + 1, y - 1]
-        else:
-            return [x, y - 1]
-
+        return [x + 1, y - 1]
 
 def getLeftDownIndex(x, y):
-    if x % 2 == 1:
-        if y % 2 == 0:
-            return [x - 1, y + 1]
-        else:
-            return [x, y + 1]
+    if y % 2 == 0:
+        return [x - 1, y + 1]
     else:
-        if y % 2 == 1:
-            return [x, y + 1]
-        else:
-            return [x - 1, y + 1]
-
+        return [x, y + 1]
 
 def getRightDownIndex(x, y):
-    if x % 2 == 1:
-        if y % 2 == 0:
-            return [x, y + 1]
-        else:
-            return [x + 1, y + 1]
+    if y % 2 == 0:
+        return [x, y + 1]
     else:
-        if y % 2 == 1:
-            return [x + 1, y + 1]
-        else:
-            return [x, y + 1]
-
+        return [x + 1, y + 1]
 
 def is_valid_insert(x, y, insect_type):
     global valid_moves
@@ -244,9 +206,9 @@ def _graphical_insert(x, y, insect_type):
     current_clr = 'blue'
     if turn:
         current_clr = 'yellow'
-
+    # global arr_move_cnt
     grid.setCell(x, y, txt=insect_type, fill=current_clr)
-    arr_move_cnt[x][y] = move_count
+    # arr_move_cnt[x][y] = move_count
     messagebox.showinfo("GRAPHICAL INSERT COMPLETED!")
     print("graphical insert completed")
 
@@ -280,9 +242,9 @@ def insert_on_board(x, y, bee_type):
 
 def insert_piece():
     global turn
-    if turn:
-        print("wait for your turn")
-        return
+    # if turn:
+    #     print("wait for your turn")
+    #     return
     global xAxisInput
     global yAxisInput
     global typeTxt
@@ -582,7 +544,18 @@ def make_board():
     btn2.grid(row=10, column=2)
 
 
+def init_game_logic():
+    global game_page
+    global is_taken
+    game_page = [[[] for j in range(8)] for i in range(8)]
+    is_taken = [[False for j in range(8)] for i in range(8)]
+
+    # print("is taken")
+    # print(is_taken)
+
+
 if __name__ == '__main__':
     make_board()
     init_game_logic()
     tk.mainloop()
+
