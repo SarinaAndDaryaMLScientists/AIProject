@@ -61,16 +61,46 @@ def huristicValue(): #todo
     return pieces_value()
 
 
+insect_types = ['Q', 'A', 'S', 'G', 'B']
+
+
+def get_all_insert_moves():
+    ls = []
+    for i in range(board_size):
+        for j in range(board_size):
+            for insect_type in insect_types:
+                if is_valid_insert(i, j, insect_type):
+                    ls.append(('insert', i, j, insect_type))
+    return ls
+
+
+def get_all_movements():
+    ls = []
+    for x1 in range(board_size):
+        for y1 in range(board_size):
+            if is_taken[x1][y1] and game_page[x1][y1][len(game_page[x1][y1]) - 1].color == get_current_player().color:
+                for x2 in range(board_size):
+                    for y2 in range(board_size):
+                        if is_valid_move(x1, y1, x2, y2):
+                            ls.append(('move', x1, y1, x2, y2))
+
+
 def get_all_moves():
-    return get
+    return get_all_insert_moves() + get_all_movements()
 
 
 def do_move(mv):
-    pass
+    if mv[0] == 'insert':
+        logical_insert(mv[1], mv[1], mv[3])
+    else:
+        change_place_on_board(mv[1], mv[2], mv[3], mv[4], False)
 
 
 def undo_move(mv):
-    pass
+    if mv[0] == 'insert':
+        logical_remove(mv[1], mv[2])
+    else:
+        change_place_on_board(mv[3], mv[4], mv[1], mv[2], False)
 
 
 def minmax(depth):
@@ -81,9 +111,9 @@ def minmax(depth):
     score = 'nan'
     mx = 0
     for mv in moves:
-        doMove(mv)
+        do_move(mv)
         currScore = minmax(depth + 1)
-        undoMove(mv)
+        undo_move(mv)
         if score == 'nan':
             score = currScore
         if depth % 2 == 0:
@@ -94,8 +124,8 @@ def minmax(depth):
 
 
 def check_game_finished():
-    for x in range(8):
-        for y in range(8):
+    for x in range(board_size):
+        for y in range(board_size):
             for a in game_page[x][y]:
                 if a.bee_type == 'Q':
                     # print("game finished ", x, y)
@@ -169,7 +199,7 @@ def neighbor_points(x, y):
 def get_num(x, y):
     x = int(x)
     y = int(y)
-    return 10 * x + y
+    return board_size * x + y
 
 
 def graph_is_connected_connection_check(x, y):
@@ -178,7 +208,7 @@ def graph_is_connected_connection_check(x, y):
     if move_count == 1:
         return True
     for [u, v] in neighbor_points(x, y):
-        if 0 <= u < 8 and 0 <= v < 8:
+        if 0 <= u < board_size and 0 <= v < board_size:
             if is_taken[u][v]:
                 return True
     print("graph connection problem")
@@ -284,10 +314,9 @@ class LogicalHexagon(object):
 
 def logical_insert(x, y, insect_type):
     global is_taken
-    color = get_current_player().color
     global game_page
-    game_page[x][y].append(LogicalHexagon(insect_type, color))
     p = get_current_player()
+    game_page[x][y].append(LogicalHexagon(insect_type, p.color))
     p.use_one_piece(insect_type)
     is_taken[x][y] = True
     global game_graph
@@ -422,7 +451,7 @@ def is_valid_change(x1, y1, x2, y2):
     return True
 
 
-def is_valid_move(x1, x2, y1, y2):
+def is_valid_move(x1, y1, x2, y2):
     try:
         x1 = int(x1)
         x2 = int(x2)
@@ -442,14 +471,26 @@ def is_valid_move(x1, x2, y1, y2):
         return False
 
 
-def change_place_on_board(x1, y1, x2, y2):
+def logical_remove(x, y):
+
+    global game_page
+    t = game_page[x][y].pop().bee_type
+    if len(game_page[x][y]) == 0:
+        is_taken[x][y] = False
+    get_current_player().return_one_piece(t)
+    global game_graph
+    game_graph.remove_node(get_num(x, y))
+
+
+def change_place_on_board(x1, y1, x2, y2, graphical = True):
     global is_taken
     global game_page
-    ty = game_page[x1][y1].pop().bee_type
-    remove_hexagon_from_screen(x1, y1)
-    insert_on_board(x2, y2, ty)
-    is_taken[x1][y1] = False
-    is_taken[x2][y2] = True
+    bee_type = game_page[x1][y1][len(game_page[x1][y1] - 1)]
+    if graphical:
+        remove_hexagon_from_screen(x1, y1)
+        graphical_insert(x2, y2, bee_type)
+    logical_remove(x1, y1)
+    logical_insert(x2, y2, bee_type)
 
 
 aiPlaying = False
@@ -485,7 +526,7 @@ def move_piece():
     y1 = ymvsecond.get("1.0", "end-1c")
     y1, x1, y2, x2 = input().split()
     print("x1", x1, "y1", y1, "x2", x2, "y2", y2)
-    if not is_valid_move(x1, x2, y1, y2):
+    if not is_valid_move(x1, y1, x2, y2):
         print("invalid move")
         return
     x1 = int(x1)
@@ -536,8 +577,8 @@ def make_board():
 def init_game_logic():
     global game_page
     global is_taken
-    game_page = [[[] for j in range(8)] for i in range(8)]
-    is_taken = [[False for j in range(8)] for i in range(8)]
+    game_page = [[[] for j in range(board_size)] for i in range(board_size)]
+    is_taken = [[False for j in range(board_size)] for i in range(board_size)]
 
     # print("is taken")
     # print(is_taken)

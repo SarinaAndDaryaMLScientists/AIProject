@@ -21,6 +21,18 @@ class Player():
     def get_player_pieces(self):
         return self.pieces
 
+    def return_one_piece(self, str_inp):
+        if str_inp == 'Q':
+            self.pieces[BeeKind.QueenBee] += 1
+        if str_inp == 'B':
+            self.pieces[BeeKind.Beetle] += 1
+        if str_inp == 'G':
+            self.pieces[BeeKind.Grasshopper] += 1
+        if str_inp == 'A':
+            self.pieces[BeeKind.Ant] += 1
+        if str_inp == 'S':
+            self.pieces[BeeKind.Spider] += 1
+
     def use_one_piece(self, str_inp):
         if str_inp == 'Q':
             if self.pieces[BeeKind.QueenBee] > 0:
@@ -51,7 +63,6 @@ class Player():
         elif str_inp == 'S':
             return self.pieces[BeeKind.Spider] > 0
         return False
-
 
 # if __name__ == '__main__':
 #     p = Player("w")
