@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import copy
+#Hello, sorry for not testing it, i actually can't undrestand the problem in my code.
 lines = np.loadtxt("database.cnf", dtype=int, delimiter="  ", unpack=False)
 temp = ""
 
@@ -13,138 +14,82 @@ for i in np.nditer(lines):
         cnf.append(cnfI)
         cnfI = []
     else:
-        if abs(int(i)) > mxNum:
-            mxNum = abs(int(i))
         cnfI.append(int(i))
-# print(cnf)
-# print(mxNum) #first optimization failed. the number 100 is used in these numbers, so instead we will look for actual optimization
-arr = np.zeros(101)
+
+gene_len = 101
+iterations = 100000
+pop_len = 20
 
 
-def satifyCondition(a, x):
-    if x != 0:
-        if a > 0:
-            return True
-        else:
-            return False
-    else:
-        if a > 0:
-            return False
-        else:
-            return True
+def generate_random_population(pl, gl):
+    ls = []
+    for x in range(pl):
+        ls.append(np.random.randint(0, 2, gl).tolist())
+    return ls
 
 
-def satisfiesAllCnf(arr1, cnf1):
-    for a, b, c in cnf1:
-        res = satifyCondition(a, arr1[abs(a)]) or satifyCondition(b, arr1[abs(b)]) or satifyCondition(c, arr1[abs(c)])
-        if not res:
-            return False
-    return True
+def satisfyCon(b, gene):
+    if b > 0 and gene[b] == 1:
+        return True
+    if b < 0 and gene[b] == 0:
+        return True
+    return False
 
 
-# print(satisfiesAllCnf(arr, cnf))
-# boolExpressionValues = [0, 1]
-
-def howCloseWeWereToAnswer(arr1):
+def get_fitness(gene):
     score = 0
     for a, b, c in cnf:
-        res = satifyCondition(a, arr1[abs(a)]) or satifyCondition(b, arr1[abs(b)]) or satifyCondition(c, arr1[abs(c)])
-        if res:
+        if satisfyCon(a, gene) and satisfyCon(b, gene) and satisfyCon(c, gene):
             score = score + 1
     return score
 
 
-def printPopulationAndFitnessScore(genCnt, population):
-    print("current generation is the {} generation with the {} population".format(genCnt, population.fitnessScore))
+def calculate_fitness_score(pop):
+    score = 0
+    for j in range(len(pop)):
+        score += get_fitness(pop[j])
+    return score
 
 
-def copyArray(bestGene):
-    arr1 = []
-    for item in bestGene:
-        arr1.append(item)
-    return arr1
+def selection(population1):
+    maximum = -1
+    secondMax = -1
+    maximumIndex = -1
+    secondMaxIndex = -1
+    index = 0
+    for gen in population1:
+        if get_fitness(gen) > maximum:
+            secondMax = maximum
+            secondMaxIndex = maximumIndex
+            maximum = get_fitness(gen)
+            maximumIndex = index
+        index = index + 1
+    return population1[maximumIndex], population1[secondMaxIndex]
 
 
-def evaluate(population):
-    bestGene = population.getBestIndividual().copy()
-    u = copyArray(bestGene)
-    for k in range(101):
-        u = copyArray(bestGene)
-        if bestGene[k] == 1:
-            u[k] = 0
-        else:
-            u[k] = 1
-        if howCloseWeWereToAnswer(u) > howCloseWeWereToAnswer(bestGene):
-            bestGene[k] = u[k]
-    return bestGene
+# calculate_fitness_score(population)
+def crossover(p1, p2):
+    firstHalf = p1[:len(p1) // 2]
+    secondHalf = p2[len(p2) // 2]
+    return [firstHalf, secondHalf]
 
 
-def geneticAlgorithm(arr1):
-    genCnt = 0
-    population = Population.Population()
-    printPopulationAndFitnessScore(genCnt, population)
-    while True:
-        if population.fitnessScore == 101:
-            print("successfully generated the population!")
-            break;
-        else:
-            print("starting selection")
-            population.selectBestAndSecondBestAndThirdBest()
-            print("starting crossover")
-            population.doCrossOverBetweenGen1And2Gene2And3AndGene1And3()
-            print("checking if evaluation condition is met")
-            rand = random.random()
-            if rand > 0.7:
-                print("evaluation started")
-                evaluate(population)
-                print("evaluation completed")
+population = generate_random_population(pop_len, gene_len)
+crossoverRate = 0.05
+mutationRate = 0.01
 
 
+def mutate(selectedPopulation1):
+    rand = random.randint(0, len(selectedPopulation1))
+    if selectedPopulation1[rand] == 1:
+        selectedPopulation1[rand] = 0
+    else:
+        selectedPopulation1[rand] = 1
 
 
-
-def calCNF(genes):
-    return howCloseWeWereToAnswer(genes)
-
-
-class Individual:
-    def __init__(self):
-        self.geneLen = 101
-        self.fitness = 0
-        self.genes = np.zeros(101)
-        for i in range(0, self.geneLen):
-            rand = random.random()
-            if rand < 0.5:
-                self.genes[i] = 0
-            else:
-                self.genes[i] = 1
-
-    def calculateFitness(self):
-        self.fitness = calCNF(self.genes)
-        return self.fitness
-
-    def copy(self):
-        return copy.deepcopy(self)
-class Population():
-    def __init__(self):
-        self.popSize = 0
-        self.individuals = []  # array of individuals in a gene.
-        self.geneLen = 101
-        self.fitnessScore = 0
-
-    def getFitnessScore(self):
-        score = 0
-        for i in range(len(self.individuals)):
-            score = score + self.individuals[i].calculateFitness()
-
-    def getBestGene(self):
-        maxFitnessIndex = self.calMaxFitness()
-        return self.individuals[maxFitnessIndex]
-
-    def calMaxFitness(self):
-        mx, mxIndex = -1, -1
-        for x in range(len(self.individuals)):
-            if self.individuals[x].fitness > mx:
-                mx = self.individuals[x].fitness
-                mxIndex = x
-        return mxIndex
+for n in range(iterations):
+    x = np.random.random()
+    selectedPopulation = selection(population)
+    for c in crossover(selectedPopulation):
+        if x < mutationRate:
+            mutate(selectedPopulation)

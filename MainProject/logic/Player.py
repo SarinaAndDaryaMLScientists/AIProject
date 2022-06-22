@@ -14,7 +14,10 @@ class Player():
         self.color = color
         self.is_queen_placed = False
         self.pieces = {
-            BeeKind.QueenBee: 1, BeeKind.Spider: 2, BeeKind.Ant: 3, BeeKind.Grasshopper: 3,
+            BeeKind.QueenBee: 1,
+            BeeKind.Spider: 2,
+            BeeKind.Ant: 3,
+            BeeKind.Grasshopper: 3,
             BeeKind.Beetle: 2
         }
 
