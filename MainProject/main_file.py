@@ -1,12 +1,10 @@
-# Darya Taghva
-import main3
+# Darya Taghva Sarina nemati
 from tkinter import *
 from tkinter import messagebox
-
-# from Phase2MinMax.FinalMinMaxAlgorithmForHiveGame import FinalMinMaxAlgorithmForHiveGame
-from logic.Player import Player
 import networkx as nx
 import numpy as np
+import main3
+from logic.Player import Player
 
 p1 = Player("yellow")
 p2 = Player("blue")
@@ -23,14 +21,12 @@ ymvfirst = Text(tk, height=2, width=2, bg="light blue")
 ymvsecond = Text(tk, height=2, width=2, bg="light blue")
 typeTxt = Text(tk, height=2, width=2, bg="light yellow")
 
-turn = False
 mv_cnt = 0
 board_size = 8
 game_graph = nx.Graph()
 valid_moves = set()
 is_taken = []
 game_page = []
-
 
 
 def get_peice_value(bee_type):
@@ -50,56 +46,85 @@ def pieces_value():
         for j in range(board_size):
             for a in game_page[i][j]:
                 ai_piece = 1
-                if a.color == 'blue':
+                if a.color != get_current_player().color:
                     ai_piece = -1
                 score += ai_piece * get_peice_value(a.bee_type)
     return score
 
 
-def huristicValue(): #todo
-    return pieces_value()
+def delta_pieces_around_queens():
+    piece_around_turn_queen = 0
+    piece_around_other_queen = 0
+    for i in range(board_size):
+        for j in range(board_size):
+            for a in game_page[i][j]:
+                if a.bee_type == 'Q':
+                    if a.color == get_current_player().color:
+                        for x, y in neighbor_points(i, j):
+                            if is_inside(x, y) and is_taken[x][y]:
+                                piece_around_turn_queen += 1
+                    else:
+                        for x, y in neighbor_points(i, j):
+                            if is_inside(x, y) and is_taken[x][y]:
+                                piece_around_other_queen += 1
+    if piece_around_other_queen == 6:
+        return 100
+    if piece_around_turn_queen == 6:
+        return -100
+    return piece_around_other_queen - piece_around_turn_queen
+
+
+def pieces_count():
+    number_of_pieces = 0
+    for i in range(board_size):
+        for j in range(board_size):
+            for a in game_page[i][j]:
+                if a.color == get_current_player().color:
+                    number_of_pieces += 1
+                else:
+                    number_of_pieces -= 1
+    return number_of_pieces
+
+
+def huristicValue():
+    return   pieces_value() + delta_pieces_around_queens() ** 5 +\
+           len(get_all_moves()) * 2
 
 
 insect_types = ['Q', 'A', 'S', 'G', 'B']
 
 
 def get_all_insert_moves():
-    print("get all insert moves")
+    # print("get all insert moves")
     ls = []
     for i in range(board_size):
         for j in range(board_size):
             for insect_type in insect_types:
                 if get_current_player().has_enough_piece(insect_type) and is_valid_insert(i, j, insect_type, False):
                     ls.append(('insert', i, j, insect_type))
-    print("get all insert  2")
-    print_game_page()
+    # print("get all insert  2")
     return ls
 
-def print_game_page():
-    global game_page
-    for x in range(board_size):
-        for y in range(board_size):
-            for a in game_page[x][y]:
-                print("x="+ str(x), "y=" + str(y) + "a=" + str(a))
-    print("pass")
 
 def get_all_movements():
     ls = []
-    print("get all move moves")
+    # print("get all move moves")
     for x1 in range(board_size):
         for y1 in range(board_size):
             if is_taken[x1][y1] and game_page[x1][y1][len(game_page[x1][y1]) - 1].color == get_current_player().color:
                 for x2 in range(board_size):
                     for y2 in range(board_size):
-                        print(x1, y1, x2, y2)
+                        # print(x1, y1, x2, y2)
                         if is_valid_move(x1, y1, x2, y2, False):
                             ls.append(('move', x1, y1, x2, y2))
-    print("get all move moves2")
+    # print("get all move moves2")
     return ls
 
 
 def get_all_moves():
-    return get_all_insert_moves() + get_all_movements()
+    if get_current_player().is_queen_placed:
+        return get_all_insert_moves() + get_all_movements()
+    return get_all_insert_moves()
 
 
 def do_move(mv):
@@ -117,33 +142,43 @@ def undo_move(mv):
     else:
         change_place_on_board(mv[3], mv[4], mv[1], mv[2], False)
 
-def minmax(depth):
+
+def minmax(depth, alpha = -1000000, beta = 1000000, maximizer = True):
+    global move_count
     best_move = []
-    print("minmax ", depth)
+    # print("minmax ", depth, " turn ", move_count)
+    if delta_pieces_around_queens() == 100:
+        return 1000000, []
+    if delta_pieces_around_queens() == -100:
+        return -1000000, []
     if depth == 0:
         return huristicValue(), []
     global game_page
     moves = get_all_moves()
-    print("minmax2 ", depth)
+    # print("minmax2 ", depth)
     score = 'nan'
     mx = 0
     for mv in moves:
-        print(len(moves))
-        print(mv)
         do_move(mv)
-        currScore = minmax(depth - 1)[0]
+        move_count += 1
+        currScore = minmax(depth - 1, alpha, beta, not maximizer)[0]
+        move_count -= 1
         undo_move(mv)
         if score == 'nan':
             score = currScore
             best_move = mv
-        if depth % 2 == 0: #Maximizing
-            if currScore > score:
+        if maximizer:
+            if currScore != 'nan' and currScore > score:
                 score = currScore
                 best_move = mv
+                alpha = max(alpha, score)
         else:
-            if currScore < score:
+            if currScore != 'nan' and currScore < score:
                 score = currScore
                 best_move = mv
+                beta = min(beta, score)
+        if beta <= alpha:
+            break
     return score, best_move
 
 
@@ -161,10 +196,11 @@ def check_game_finished():
                         print("game Over")
                         if a.color == "yellow":
                             print("BLUE WINS")
-                            # messagebox.showerror("", "Game Over. blue wins ")
+                            messagebox.showerror("", "Game Over. blue wins ")
                         else:
-                            # messagebox.showerror("", "Game Over. yellow wins ")
+                            messagebox.showerror("", "Game Over. yellow wins ")
                             print("yellow wins")
+                        exit()
 
 
 def is_inside(x, y):
@@ -176,7 +212,8 @@ def is_inside(x, y):
 
 
 def get_current_player():
-    if turn:
+    global move_count
+    if move_count % 2 == 0:
         return p1
     return p2
 
@@ -195,7 +232,7 @@ def check_queen_placed(a):
 
 
 def is_valid_type(insect_type):
-    print(insect_type)
+    global move_count
     if insect_type == 'Q' or insect_type == 'B' or insect_type == 'G' or insect_type == 'S' or insect_type == 'A':
         if has_enough_number_of_this_kind(insect_type):
             if move_count == 7 and insect_type != 'Q':
@@ -203,6 +240,7 @@ def is_valid_type(insect_type):
             if move_count == 8 and insect_type != 'Q':
                 return check_queen_placed(2)
             return True
+
     return False
 
 
@@ -330,8 +368,9 @@ def is_valid_insert(x, y, insect_type, graphical=True):
 
 
 def graphical_insert(x, y, insect_type):
+    global move_count
     current_clr = 'blue'
-    if turn:
+    if move_count % 2 == 0:
         current_clr = 'yellow'
     grid.setCell(x, y, txt=insect_type, fill=current_clr)
     print("graphical insert completed")
@@ -347,17 +386,14 @@ def logical_insert(x, y, insect_type):
     global is_taken
     global game_page
     p = get_current_player()
-    # if(p.has_enough_piece(insect_type)):
     game_page[x][y].append(LogicalHexagon(insect_type, p.color))
     p.use_one_piece(insect_type)
     is_taken[x][y] = True
     global game_graph
     game_graph.add_node(get_num(x, y))
     for a, b in neighbor_points(x, y):
-        if is_taken[a][b]:
+        if is_inside(a, b) and is_taken[a][b]:
             game_graph.add_edge(get_num(x, y), get_num(a, b))
-    global turn
-    turn = not turn
 
 
 def insert_on_board(x, y, bee_type):
@@ -366,15 +402,15 @@ def insert_on_board(x, y, bee_type):
 
 
 def insert_piece():
-    global turn
     global xAxisInput
     global yAxisInput
     global typeTxt
     global move_count
     global move_count_map
-    x = xAxisInput.get("1.0", "end-1c")
-    y = yAxisInput.get("1.0", "end-1c")
-    type = typeTxt.get("1.0", "end-1c")
+    inp = typeTxt.get("1.0", "end-1c")
+    type = inp[0]
+    y = inp[1]
+    x = inp[2]
     if not is_valid_insert(x, y, type):
         return
 
@@ -383,9 +419,12 @@ def insert_piece():
     insert_on_board(x, y, type)
     check_game_finished()
     move_count = move_count + 1
+    print("Queen bee ", p1.get_player_pieces())
+    print("Queen beeee ", p2.get_player_pieces())
     AI_move()
-    print(p1.pieces)
-    print(p2.pieces)
+    # AI_move()
+    print("Queen bee ", p1.get_player_pieces())
+    print("Queen beeee ", p2.get_player_pieces())
 
 
 def current_place_is_valid(x1, y1, graphical=True):
@@ -405,7 +444,7 @@ def current_place_is_valid(x1, y1, graphical=True):
 
 
 def other_place_is_valid(x, y):
-    print("other place", x, y)
+    # print("other place", x, y)
     if not is_inside(x, y):
         return False
     if is_taken[x][y]:
@@ -416,7 +455,7 @@ def other_place_is_valid(x, y):
 def type_movement_possible_for_specific_bee(x1, y1, x2, y2):
     global game_page
     current_bee_type = game_page[x1][y1][len(game_page[x1][y1]) - 1].bee_type
-    print("type ", current_bee_type)
+    # print("type ", current_bee_type)
     if current_bee_type == 'Q' or current_bee_type == 'B':
         # print("Q or B")
         for nx1, ny1 in neighbor_points(x1, y1):
@@ -427,11 +466,11 @@ def type_movement_possible_for_specific_bee(x1, y1, x2, y2):
         return True
     elif current_bee_type == 'S':
         for nx1, ny1 in neighbor_points(x1, y1):
-            if not is_taken[nx1][ny1]:
+            if is_inside(nx1, ny1) and not is_taken[nx1][ny1]:
                 for nx2, ny2 in neighbor_points(nx1, ny1):
-                    if not is_taken[nx2][ny2]:
+                    if is_inside(nx2, ny2) and not is_taken[nx2][ny2]:
                         for nx3, ny3 in neighbor_points(nx2, ny2):
-                            if not is_taken[nx3][ny3]:
+                            if is_inside(nx3, ny3) and not is_taken[nx3][ny3]:
                                 if nx3 == x2 and ny3 == y2:
                                     return True
         return False
@@ -439,7 +478,7 @@ def type_movement_possible_for_specific_bee(x1, y1, x2, y2):
         for t in range(6):
             a = get_neighbor_index(x1, y1, t)
             while is_inside(a[0], a[1]) and is_taken[a[0]][a[1]]:
-                print(a[0], a[1])
+                # print(a[0], a[1])
                 a = get_neighbor_index(a[0], a[1], t)
             if a[0] == x2 and a[1] == y2:
                 return True
@@ -449,44 +488,47 @@ def type_movement_possible_for_specific_bee(x1, y1, x2, y2):
 
 
 def remove_hexagon_from_screen(x, y):
-    grid.setCell(x, y, fill='white')
-    global game_graph
-    game_graph.remove_node(get_num(x, y))
+    grid.setCell(x, y, fill='white', txt=str(y) + ',' + str(x))
 
 
-def safe_to_remove_node(x1, y1):
+def safe_to_remove_node(x1, y1, x2, y2):
     global game_graph
     copy_graph = game_graph.copy()
     copy_graph.remove_node(get_num(x1, y1))
     if nx.is_connected(copy_graph):
-        return True
+        copy_graph.add_node(get_num(x2, y2))
+        for [u, v] in neighbor_points(x2, y2):
+            if is_inside(u, v) and is_taken[u][v]:
+                copy_graph.add_edge(get_num(x2, y2), get_num(u, v))
+        return nx.is_connected(copy_graph)
     return False
 
 
-def safe_to_insert_node(x2, y2):
-    global game_graph
-    copy_graph = game_graph.copy()
-    copy_graph.add_node(get_num(x2, y2))
-    for [u, v] in neighbor_points(x2, y2):
-        if is_inside(u, v) and is_taken[u][v]:
-            copy_graph.add_edge(get_num(x2, y2), get_num(u, v))
-    return nx.is_connected(copy_graph)
+# def safe_to_insert_node(x2, y2):
+#     global game_graph
+#     copy_graph = game_graph.copy()
+#     copy_graph.add_node(get_num(x2, y2))
+#     for [u, v] in neighbor_points(x2, y2):
+#         if is_inside(u, v) and is_taken[u][v]:
+#             copy_graph.add_edge(get_num(x2, y2), get_num(u, v))
+#     return nx.is_connected(copy_graph)
 
 
 def is_valid_change(x1, y1, x2, y2, graphical=True):
-    print("is valid change")
+    # print("is valid change")
     if not type_movement_possible_for_specific_bee(x1, y1, x2, y2):
-        print("type felan")
+        if graphical:
+            print("This move is not possible for that bee")
         return False  # this means that if bee is queen can it move to that place? or ...
-    print("is valid change 2")
-    if not safe_to_remove_node(x1, y1):
+    # print("is valid change 2")
+    if not safe_to_remove_node(x1, y1, x2, y2):
         if graphical:
             print('unsafe to remove')
         return False
-    if not safe_to_insert_node(x2, y2):
-        if graphical:
-            print("unsafe to insert")
-        return False
+    # if not safe_to_insert_node(x2, y2):
+    #     if graphical:
+    #         print("unsafe to insert")
+    #     return False
     return True
 
 
@@ -496,19 +538,19 @@ def is_valid_move(x1, y1, x2, y2, graphical=True):
         x2 = int(x2)
         y1 = int(y1)
         y2 = int(y2)
-        print("is valid move")
+        # print("is valid move")
         if not current_place_is_valid(x1, y1):
             if graphical:
                 print("current bee invalid")
             return False
-        print("is valid move 2")
+        # print("is valid move 2")
         if not other_place_is_valid(x2, y2):
             if graphical:
                 print("other bee invalid")
             return False
-        print("is valid move 2")
-        if not is_valid_change(x1, y1, x2, y2):
-            print("change")
+        # print("is valid move 2")
+        if not is_valid_change(x1, y1, x2, y2, graphical):
+            # print("change")
             if graphical:
                 print("invalid change")
             return False
@@ -527,8 +569,6 @@ def logical_remove(x, y):
     get_current_player().return_one_piece(t)
     global game_graph
     game_graph.remove_node(get_num(x, y))
-    global turn
-    turn = not turn
 
 
 def change_place_on_board(x1, y1, x2, y2, graphical=True):
@@ -540,8 +580,7 @@ def change_place_on_board(x1, y1, x2, y2, graphical=True):
         graphical_insert(x2, y2, bee_type)
     logical_remove(x1, y1)
     logical_insert(x2, y2, bee_type)
-    global turn
-    turn = not turn
+
 
 
 def AI_move():
@@ -557,22 +596,15 @@ def AI_move():
 
 
 def move_piece():
-    global aiPlaying
-    if aiPlaying:
-        print("AI is playing!")
-        print("wait for your turn")
-        return
-    # print("googooli")
-    global turn
     global xmvfirst
     global xmvsecond
     global ymvfirst
     global ymvsecond
-    x2 = xmvfirst.get("1.0", "end-1c")
-    x1 = xmvsecond.get("1.0", "end-1c")
-    y2 = ymvfirst.get("1.0", "end-1c")
-    y1 = ymvsecond.get("1.0", "end-1c")
-    # y1, x1, y2, x2 = input().split()
+    inp = xmvfirst.get("1.0", "end-1c")
+    # x1 = xmvsecond.get("1.0", "end-1c")
+    # y2 = ymvfirst.get("1.0", "end-1c")
+    # y1 = ymvsecond.get("1.0", "end-1c")
+    y1, x1, y2, x2 = inp[0], inp[1], inp[2], inp[3]
     print("x1", x1, "y1", y1, "x2", x2, "y2", y2)
     if not is_valid_move(x1, y1, x2, y2):
         print("invalid move")
@@ -585,9 +617,7 @@ def move_piece():
     global move_count
     move_count = move_count + 1
     check_game_finished()
-    aiPlaying = True
     AI_move()
-    aiPlaying = False
 
 
 def make_board():
@@ -609,16 +639,19 @@ def make_board():
     grid.grid(row=0, column=0, padx=0, pady=0)
     btn = Button(tk, height=2, text='Create new bee', bg='#66ff66', command=insert_piece)
     btn2 = Button(tk, height=2, text="edit bee place", bg='#66ff66', command=move_piece)
-    xAxisInput.grid(row=10, column=10)
-    yAxisInput.grid(row=10, column=9)
+    # xAxisInput.grid(row=10, column=10)
+    # yAxisInput.grid(row=10, column=9)
     typeTxt.grid(row=10, column=8)
     xmvfirst.grid(row=10, column=6)
-    ymvfirst.grid(row=10, column=5)
-    xmvsecond.grid(row=10, column=4)
-    ymvsecond.grid(row=10, column=3)
+    # ymvfirst.grid(row=10, column=5)
+    # xmvsecond.grid(row=10, column=4)
+    # ymvsecond.grid(row=10, column=3)
 
     btn.grid(row=10, column=7)
     btn2.grid(row=10, column=2)
+    for i in range(8):
+        for j in range(8):
+            grid.setCell(i, j, txt= str(j) + ' , ' + str(i), fill='white')
 
 
 def init_game_logic():
@@ -626,9 +659,6 @@ def init_game_logic():
     global is_taken
     game_page = [[[] for j in range(board_size)] for i in range(board_size)]
     is_taken = [[False for j in range(board_size)] for i in range(board_size)]
-
-    # print("is taken")
-    # print(is_taken)
 
 
 if __name__ == '__main__':
